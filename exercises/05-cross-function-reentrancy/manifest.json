@@ -1,0 +1,40 @@
+{
+  "id": "05-cross-function-reentrancy",
+  "order": 5,
+  "title": "Cross-Function Reentrancy",
+  "difficulty": "intermediate",
+  "vuln": "vuln/reentrancy/cross-function",
+  "sector": "infra",
+  "source": "18201-reentrancy-and-untrusted-contract-call-in-mintmultiple-diffi",
+  "summary": "A bank guards withdraw() with a reentrancy lock — but leaves transfer() unguarded. During withdraw()'s external call you cannot re-enter withdraw, but you CAN call transfer() to move your not-yet-zeroed balance to an accomplice.",
+  "web2Analog": "Inconsistent locking: one critical section is synchronized but a sibling that touches the same state is not — a partial mutex that a determined caller routes around.",
+  "files": {
+    "vulnerable": "src/VaultBank.sol",
+    "extraSources": [],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "Why does the reentrancy guard fail to stop the attack?",
+    "options": [
+      "withdraw() is missing the noReentrant modifier",
+      "transfer() has no guard and is reachable during withdraw()'s callback, so the not-yet-zeroed balance can be moved",
+      "deposit() is unguarded",
+      "the `locked` flag is private"
+    ],
+    "answerIndex": 1,
+    "explanation": "The lock only protects withdraw(). During withdraw()'s external call the attacker's balance is still set, and transfer() (unguarded) can move that balance to a second account, which then withdraws it separately. Reentrancy guards must cover every function that touches the shared state."
+  },
+  "hints": [
+    "withdraw() IS guarded — so re-entering withdraw() directly will revert. What else touches balanceOf?",
+    "During the callback your balance hasn't been zeroed yet. Is there an unguarded function that lets you move it?",
+    "From receive(), call transfer() to push your balance to a helper contract, then withdraw it from there.",
+    "The fix: apply the reentrancy guard to transfer() too, or follow checks-effects-interactions in withdraw()."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/VaultBank.sol", "fixTag": "fix/use-reentrancy-guard" }
+  }
+}

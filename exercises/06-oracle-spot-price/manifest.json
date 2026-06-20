@@ -1,0 +1,43 @@
+{
+  "id": "06-oracle-spot-price",
+  "order": 6,
+  "title": "Spot-Price Oracle Manipulation",
+  "difficulty": "advanced",
+  "vuln": "vuln/oracle/spot-price",
+  "sector": "lending",
+  "source": "55274-h-01-domain-pricing-relies-on-pool-price-which-can-be-manipu",
+  "summary": "A lending desk values collateral using a constant-product AMM's SPOT price. An attacker swaps to pump the price, then borrows far more than the collateral is really worth — draining the desk.",
+  "web2Analog": "Trusting an attacker-controllable data source as ground truth — like using a client-supplied value for a security decision instead of a trusted server-side source.",
+  "files": {
+    "vulnerable": "src/LendingDesk.sol",
+    "extraSources": ["src/MiniAMM.sol", "shared/MockERC20.sol"],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": null
+  },
+  "identify": {
+    "question": "Why can the lending desk be drained?",
+    "options": [
+      "borrow() transfers tokenB to the caller",
+      "It values collateral with amm.priceAinB(), a spot price that one swap can move",
+      "priceAinB() scales the result by 1e18",
+      "addLiquidity() is permissionless"
+    ],
+    "answerIndex": 1,
+    "explanation": "priceAinB() = reserveB / reserveA is the instantaneous (spot) price. A single large swap moves the reserves, so an attacker can inflate the price of their collateral and borrow against the fake valuation."
+  },
+  "hints": [
+    "How does LendingDesk decide how much tokenB your collateral is worth?",
+    "priceAinB() = reserveB / reserveA. What happens to that ratio right after a big swap?",
+    "Swap to pump A's price, then borrow against a small amount of A at the inflated valuation."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": {
+      "mode": "explain",
+      "fixTag": "fix/use-twap",
+      "recommendedFix": "Never price assets off a manipulable spot price. Use a manipulation-resistant oracle: a time-weighted average price (TWAP) over many blocks, or an external oracle (e.g. Chainlink) with freshness and deviation checks. Spot reserves can be moved within a single transaction (often with a flash loan), so any single-block price is untrustworthy for valuation."
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "auditvault-ctf-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local learning website for the AuditVault CTF exercises (identify -> exploit -> fix).",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

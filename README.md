@@ -40,6 +40,7 @@ Think of it as <em>searchable institutional memory</em> for security researchers
 | `auditors/`        | Generated                                                                                                                                                                | Per-auditor profiles with stats |
 | `protocols/`       | Generated                                                                                                                                                                | Per-protocol pages with tags    |
 | `classifications/` | Hand-curated                                                                                                                                                             | Full vulnerability taxonomy     |
+| `exercises/`       | Hand-crafted                                                                                                                                                             | Hands-on Foundry CTF challenges |
 
 <br/>
 
@@ -109,6 +110,28 @@ node normalize_protocols.js     # protocol: raw strings → [[WikiLink]]
 node tag_protocols.js           # tag protocol pages from proto_data.json
 node gen_auditor_profiles.js    # rebuild auditors/ profiles
 ```
+
+<br/>
+
+<h2 align="center">Practice — CTF exercises</h2>
+
+<p align="center">
+The <code>exercises/</code> directory turns the findings into hands-on practice.<br/>
+For each challenge you <b>identify</b> the bug, <b>exploit</b> it, then <b>fix</b> it — graded by real Foundry tests.<br/>
+Every exercise is anchored to a real finding in the vault.
+</p>
+
+```bash
+cd exercises
+forge install foundry-rs/forge-std   # first time only
+forge build
+forge test --match-path '03-vault-inflation/test/*' -vvv   # work one exercise
+```
+
+<p align="center">
+Prefer a guided UI? <code>exercises/web/</code> is a zero-dependency local website<br/>
+(<code>cd exercises/web && npm start</code>) that walks you through Identify → Exploit → Fix with hints.
+</p>
 
 <br/>
 

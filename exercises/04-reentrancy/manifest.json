@@ -1,0 +1,40 @@
+{
+  "id": "04-reentrancy",
+  "order": 4,
+  "title": "Single-Function Reentrancy",
+  "difficulty": "intermediate",
+  "vuln": "vuln/reentrancy/single-function",
+  "sector": "infra",
+  "source": "18412-malicious-pair-can-re-enter-veryfastrouter-to-drain-original",
+  "summary": "An ETH bank sends funds with a low-level call before it zeroes the caller's balance. A malicious recipient re-enters withdraw() from its receive() and drains the bank.",
+  "web2Analog": "A TOCTOU / double-spend race: state is read and acted on before it is updated, so a re-entrant caller acts on stale state.",
+  "files": {
+    "vulnerable": "src/EtherBank.sol",
+    "extraSources": [],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "What makes withdraw() reentrant?",
+    "options": [
+      "It reads balanceOf into a local variable",
+      "It sends ETH (an external call) BEFORE setting the balance to zero",
+      "deposit() increments the balance",
+      "It uses require(bal > 0)"
+    ],
+    "answerIndex": 1,
+    "explanation": "withdraw() does the external call (msg.sender.call) before `balanceOf[msg.sender] = 0`. This violates checks-effects-interactions: during the call the balance is still non-zero, so the recipient can re-enter and withdraw again."
+  },
+  "hints": [
+    "Look at the ORDER of operations in withdraw(): when exactly is the balance set to zero?",
+    "An attacker contract's receive() runs DURING the external call — what is the balance at that moment?",
+    "From receive(), call bank.withdraw() again while the bank still holds funds.",
+    "The fix is checks-effects-interactions (zero the balance before the call) or a nonReentrant guard."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/EtherBank.sol", "fixTag": "fix/use-reentrancy-guard" }
+  }
+}

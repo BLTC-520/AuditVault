@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AuditVault CTF — Learn to break &amp; fix smart contracts</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <aside id="sidebar">
+    <h1>AuditVault <span>CTF</span></h1>
+    <p class="tagline">Identify → Exploit → Fix</p>
+    <ul id="exercise-list" aria-label="Exercises"></ul>
+    <footer>Local learning tool · runs real <code>forge</code></footer>
+  </aside>
+
+  <main id="main">
+    <section id="welcome">
+      <h2>Pick an exercise to begin</h2>
+      <p>Each challenge is a real vulnerability class from the AuditVault findings.
+         For every one you’ll <strong>identify</strong> the bug, <strong>exploit</strong> it,
+         then <strong>fix</strong> it — graded by running the actual Foundry test suite.</p>
+    </section>
+
+    <article id="exercise" hidden>
+      <header id="exercise-header"></header>
+
+      <nav id="stage-tabs" aria-label="Stages">
+        <button data-stage="identify" class="stage-tab">1 · Identify</button>
+        <button data-stage="exploit" class="stage-tab">2 · Exploit</button>
+        <button data-stage="fix" class="stage-tab">3 · Fix</button>
+      </nav>
+
+      <div id="stage-panel"></div>
+
+      <section id="hints-box">
+        <button id="hint-btn" type="button">Show a hint</button>
+        <ol id="hints"></ol>
+      </section>
+    </article>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

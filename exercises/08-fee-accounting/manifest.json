@@ -1,0 +1,40 @@
+{
+  "id": "08-fee-accounting",
+  "order": 8,
+  "title": "Reward Accounting: Missing Reward Debt",
+  "difficulty": "advanced",
+  "vuln": "vuln/logic/reward-calculation",
+  "sector": "staking",
+  "source": "19837-h-01-wrong-fee-calculation-after-totalsupply-was-0-code4rena",
+  "summary": "A MasterChef-style staking pool uses an accumulator (accRewardPerShare) but forgets per-user reward debt. A user who stakes AFTER rewards accrue can immediately claim as if they had been staked the whole time — stealing earlier stakers' rewards.",
+  "web2Analog": "An accounting invariant that isn't enforced per-account: crediting a user for activity that happened before they existed, because the baseline (their starting offset) was never recorded.",
+  "files": {
+    "vulnerable": "src/StakingRewards.sol",
+    "extraSources": ["shared/MockERC20.sol"],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "Why can a late staker steal earlier stakers' rewards?",
+    "options": [
+      "addRewards() requires totalStaked > 0",
+      "claim() pays staked * accRewardPerShare with no per-user reward debt subtracted",
+      "stake() transfers the stake token in",
+      "accRewardPerShare is scaled by 1e18"
+    ],
+    "answerIndex": 1,
+    "explanation": "claim() computes reward = staked * accRewardPerShare without subtracting a per-user 'reward debt' (the accumulator value at the time the user staked). So a user who stakes after rewards have accrued is paid for rewards they were never entitled to."
+  },
+  "hints": [
+    "What is accRewardPerShare already equal to by the time the attacker stakes?",
+    "claim() multiplies your stake by the GLOBAL accumulator — it never asks when you joined.",
+    "Stake the same amount as the victim AFTER addRewards() runs, then claim immediately.",
+    "The MasterChef fix: store rewardDebt = staked * accRewardPerShare at stake time, and pay (staked * accRewardPerShare) - rewardDebt."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/StakingRewards.sol", "fixTag": "fix/redesign-logic" }
+  }
+}

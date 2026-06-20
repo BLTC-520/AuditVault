@@ -1,0 +1,39 @@
+{
+  "id": "01-access-control",
+  "order": 1,
+  "title": "Unprotected Privileged Function",
+  "difficulty": "beginner",
+  "vuln": "vuln/access-control/missing-modifier",
+  "sector": "infra",
+  "source": "38189-lack-of-access-control-in-poke-function-allows-in-unlimited",
+  "summary": "A treasury guards withdrawAll() with an owner check, but leaves the setOwner() setter wide open. One unprotected privileged function undermines every other guard.",
+  "web2Analog": "A broken access-control check (IDOR / missing authorization): an endpoint that lets any caller perform an admin-only action.",
+  "files": {
+    "vulnerable": "src/Treasury.sol",
+    "extraSources": [],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "Which function lets anyone take control of the treasury?",
+    "options": [
+      "receive() — accepts ETH from anyone",
+      "setOwner() — changes the owner with no access control",
+      "withdrawAll() — already requires msg.sender == owner",
+      "the constructor — sets the initial owner"
+    ],
+    "answerIndex": 1,
+    "explanation": "setOwner() has no access control, so any caller can make themselves the owner and then pass the withdrawAll() owner check. A privileged setter must be restricted (e.g. onlyOwner)."
+  },
+  "hints": [
+    "withdrawAll() correctly requires you to be the owner — so how could an attacker satisfy that check?",
+    "Look at every state-changing function, not just the withdraw path. Which one changes who the owner is?",
+    "setOwner() has no msg.sender check at all. Call it first, then withdraw."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/Treasury.sol", "fixTag": "fix/add-access-control" }
+  }
+}

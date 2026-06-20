@@ -1,0 +1,43 @@
+{
+  "id": "07-flashloan",
+  "order": 7,
+  "title": "Flash-Loan Balance Snapshot",
+  "difficulty": "advanced",
+  "vuln": "trigger/flash-loan",
+  "sector": "lending",
+  "source": "31886-h-1-pool-can-be-drained-sherlock-woofi-swap-git",
+  "summary": "An airdrop rewards holders proportionally to their LIVE token balance. An attacker flash-borrows a fortune for one transaction, claims rewards against the borrowed balance, and repays — all atomically, for free.",
+  "web2Analog": "Trusting an instantaneous, attacker-inflatable metric (a spot snapshot) for a privileged decision, instead of a value the attacker cannot transiently manufacture.",
+  "files": {
+    "vulnerable": "src/Airdrop.sol",
+    "extraSources": ["src/FlashLender.sol", "shared/MockERC20.sol"],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": null
+  },
+  "identify": {
+    "question": "Why can the airdrop rewards be farmed for free?",
+    "options": [
+      "flashLoan() checks that the loan is repaid",
+      "claim() snapshots the reward from a live token.balanceOf, so a flash-borrowed balance counts",
+      "the claimed mapping prevents claiming twice",
+      "reward.mint() is callable by anyone"
+    ],
+    "answerIndex": 1,
+    "explanation": "claim() mints rewards equal to token.balanceOf(msg.sender) at call time — an instantaneous spot balance. A flash loan lets the attacker hold a huge balance for the duration of one call, claim against it, and repay in the same transaction."
+  },
+  "hints": [
+    "What balance does claim() use to size the reward — and when is it measured?",
+    "A flash loan gives you a massive balance for exactly one transaction. What can you do while holding it?",
+    "Inside onFlashLoan(), call airdrop.claim() before repaying the loan."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": {
+      "mode": "explain",
+      "fixTag": "fix/add-snapshot",
+      "recommendedFix": "Never base entitlements on a live, transiently-inflatable balance. Use a checkpointed balance captured at a fixed snapshot block (e.g. ERC20Votes/ERC20Snapshot), or accrue rewards over time held rather than instantaneous holdings. A flash loan can give any address an arbitrary balance for one transaction, so spot balanceOf must never gate value."
+    }
+  }
+}

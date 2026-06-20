@@ -1,0 +1,18 @@
+# AuditVault CTF exercises — one self-contained Foundry project.
+#
+# Each exercise lives under NN-name/ with src/ (vulnerable contract),
+# test/ (learner-completed exploit stub), and solution/ (reference exploit).
+#
+#   forge build                              # compile everything
+#   forge test --match-path '*/solution/*'   # run all reference solutions (CI gate)
+#   forge test --match-path '03-vault-inflation/*'   # work on one exercise
+[profile.default]
+src = "."
+test = "."
+out = "out"
+libs = ["lib"]
+solc = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+# Don't crawl build artifacts or the lib back into compilation.
+no_match_path = "{out,cache,lib}/**"

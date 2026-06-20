@@ -5,3 +5,10 @@ crawler/*.har
 crawler/*.zip
 crawler/*.png
 crawler/*.json.bak
+
+# CTF exercises: keep the per-exercise READMEs visible, hide forge artifacts,
+# the Solidity sources, and the web app from the Obsidian vault UI.
+exercises/lib
+exercises/out
+exercises/cache
+exercises/web

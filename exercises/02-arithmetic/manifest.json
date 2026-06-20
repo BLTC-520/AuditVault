@@ -1,0 +1,39 @@
+{
+  "id": "02-arithmetic",
+  "order": 2,
+  "title": "Unchecked Underflow",
+  "difficulty": "beginner",
+  "vuln": "vuln/arithmetic/underflow",
+  "sector": "infra",
+  "source": "27047-h-01-underflow-in-updatetranscoderwithfees-can-cause-corrupt",
+  "summary": "Solidity 0.8 reverts on overflow by default — but this ledger opts out with `unchecked` in the wrong place and skips the balance check, so a sender wraps a zero balance into a huge one.",
+  "web2Analog": "Classic integer overflow/underflow (CWE-191): trusting arithmetic that silently wraps instead of validating bounds first.",
+  "files": {
+    "vulnerable": "src/Ledger.sol",
+    "extraSources": [],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "Why can an attacker with a zero balance steal the pool?",
+    "options": [
+      "deposit() is payable so anyone can add funds",
+      "transfer() subtracts inside `unchecked` with no balance check, so it underflows to a huge number",
+      "withdraw() has a require that blocks honest users",
+      "balanceOf is a public mapping"
+    ],
+    "answerIndex": 1,
+    "explanation": "transfer() does `unchecked { balanceOf[msg.sender] -= amount; }` with no `>= amount` check. Subtracting from zero wraps to 2**256-1, giving the attacker an enormous internal balance to withdraw against."
+  },
+  "hints": [
+    "What does `unchecked { x -= y }` do when y is greater than x?",
+    "transfer() never checks that you actually have the tokens you're sending.",
+    "Transfer 1 wei from a zero balance to underflow, then withdraw the real ETH the contract holds."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/Ledger.sol", "fixTag": "fix/add-check" }
+  }
+}
