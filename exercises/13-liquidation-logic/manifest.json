@@ -1,0 +1,40 @@
+{
+  "id": "13-liquidation-logic",
+  "order": 13,
+  "title": "Liquidating a Healthy Position",
+  "difficulty": "advanced",
+  "vuln": "vuln/logic/liquidation-logic",
+  "sector": "lending",
+  "source": "15976-h-03-interest-rates-are-incorrect-on-liquidation-code4rena-p",
+  "summary": "A lending market lets a liquidator repay a borrower's debt and seize their collateral — but liquidate() never checks that the position is actually underwater. Any healthy, over-collateralised position can be liquidated and drained.",
+  "web2Analog": "A state-changing action whose precondition is never enforced — like a 'cancel order' endpoint that doesn't verify the order is actually cancellable.",
+  "files": {
+    "vulnerable": "src/Lending.sol",
+    "extraSources": ["shared/MockERC20.sol"],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "Why can a healthy position be liquidated?",
+    "options": [
+      "borrow() allows over-borrowing",
+      "liquidate() never checks whether the position is actually underwater before seizing collateral",
+      "setPrice() is callable by anyone",
+      "deposit() uses transferFrom"
+    ],
+    "answerIndex": 1,
+    "explanation": "liquidate() repays the debt and transfers out ALL collateral without ever comparing collateral value to debt. A position should only be liquidatable when collateral * price < debt; here that check is absent."
+  },
+  "hints": [
+    "What precondition should a liquidation require? Find where liquidate() checks it.",
+    "liquidate() seizes collateral regardless of whether the borrower is actually underwater.",
+    "Just call liquidate(victim) — the healthy position is seized anyway.",
+    "The fix requires the position to be underwater (collateral * price < debt) before allowing liquidation."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/Lending.sol", "fixTag": "add-check" }
+  }
+}

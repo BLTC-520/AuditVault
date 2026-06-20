@@ -1,0 +1,40 @@
+{
+  "id": "12-oracle-stale-price",
+  "order": 12,
+  "title": "Stale Oracle Price",
+  "difficulty": "intermediate",
+  "vuln": "vuln/oracle/stale-price",
+  "sector": "lending",
+  "source": "63737-h-01-zero-heartbeat-can-cause-reward-claim-failures-pashov-a",
+  "summary": "A lending desk values collateral with a price feed but never checks how old the price is. When the feed stalls, the protocol keeps lending against a frozen, no-longer-accurate price.",
+  "web2Analog": "Trusting cached data past its TTL — serving a stale value because nothing checks the timestamp / freshness before using it.",
+  "files": {
+    "vulnerable": "src/StaleLending.sol",
+    "extraSources": ["src/PriceFeed.sol", "shared/MockERC20.sol"],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "What is missing from borrow()?",
+    "options": [
+      "A check that the collateral transfer succeeded",
+      "A freshness check on the feed's updatedAt timestamp",
+      "A require that price is non-negative",
+      "A reentrancy guard"
+    ],
+    "answerIndex": 1,
+    "explanation": "borrow() reads (price, updatedAt) but ignores updatedAt entirely. A correct integration rejects a price older than a maximum age (the feed's heartbeat); this one accepts a week-old price."
+  },
+  "hints": [
+    "borrow() destructures (price, updatedAt) from the feed but only uses one of them.",
+    "How old is the price by the time the attacker borrows? Is anything checking that?",
+    "Just call borrow() — the contract happily uses the 7-day-old price.",
+    "The fix requires block.timestamp - updatedAt to be within a maximum age (heartbeat) before trusting the price."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/StaleLending.sol", "fixTag": "add-check" }
+  }
+}

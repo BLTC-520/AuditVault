@@ -20,11 +20,11 @@ async function api(path, options) {
   return { status: res.status, body: await res.json() };
 }
 
-test('GET /api/exercises lists all 8', async () => {
+test('GET /api/exercises lists every exercise', async () => {
   const { status, body } = await api('/api/exercises');
   assert.equal(status, 200);
   assert.equal(body.success, true);
-  assert.equal(body.data.length, 8);
+  assert.equal(body.data.length, 13);
 });
 
 test('GET /api/exercises/:id returns detail without the answer', async () => {

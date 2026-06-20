@@ -4,9 +4,9 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { listManifests, loadManifest, getExerciseDetail, toSummary } = require('../src/manifest');
 
-test('listManifests returns all 8 exercises, sorted by order', () => {
+test('listManifests returns all exercises, sorted by order', () => {
   const all = listManifests();
-  assert.equal(all.length, 8);
+  assert.equal(all.length, 13);
   const orders = all.map((m) => m.order);
   assert.deepEqual(orders, [...orders].sort((a, b) => a - b));
 });

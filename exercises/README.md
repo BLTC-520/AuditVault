@@ -33,3 +33,8 @@ Prefer a guided UI? See `web/` for the local learning website.
 | 06 | [[06-oracle-spot-price/README\|Spot-Price Oracle Manipulation]] | advanced | `vuln/oracle/spot-price` |
 | 07 | [[07-flashloan/README\|Flash-Loan Balance Snapshot]] | advanced | `trigger/flash-loan` |
 | 08 | [[08-fee-accounting/README\|Reward Accounting: Missing Reward Debt]] | advanced | `vuln/logic/reward-calculation` |
+| 09 | [[09-dos-push-payment/README\|Push-Payment Denial of Service]] | intermediate | `vuln/dos/unbounded-loop` |
+| 10 | [[10-bridge-replay/README\|Signature Replay]] | advanced | `vuln/bridge/replay` |
+| 11 | [[11-governance-flashloan/README\|Flash-Loaned Governance Vote]] | advanced | `trigger/governance-vote` |
+| 12 | [[12-oracle-stale-price/README\|Stale Oracle Price]] | intermediate | `vuln/oracle/stale-price` |
+| 13 | [[13-liquidation-logic/README\|Liquidating a Healthy Position]] | advanced | `vuln/logic/liquidation-logic` |

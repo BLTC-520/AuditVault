@@ -1,0 +1,40 @@
+{
+  "id": "09-dos-push-payment",
+  "order": 9,
+  "title": "Push-Payment Denial of Service",
+  "difficulty": "intermediate",
+  "vuln": "vuln/dos/unbounded-loop",
+  "sector": "infra",
+  "source": "18211-external-calls-in-loop-can-lead-to-denial-of-service-trailof",
+  "summary": "A distributor pushes ETH to every registered participant in a loop and requires each send to succeed. A single participant whose receive() reverts makes the whole loop revert, so nobody can be paid and the funds are frozen.",
+  "web2Analog": "A batch job that aborts the entire run on the first failed item — one poisoned record blocks processing for everyone (no isolation / no dead-letter handling).",
+  "files": {
+    "vulnerable": "src/Distributor.sol",
+    "extraSources": [],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "Why can one participant freeze everyone's funds?",
+    "options": [
+      "register() lets anyone join",
+      "distribute() pushes to each participant and reverts the whole loop if any single send fails",
+      "share is computed with integer division",
+      "the contract has a receive() function"
+    ],
+    "answerIndex": 1,
+    "explanation": "distribute() does `require(ok)` on every push inside the loop. A participant whose receive() reverts makes that send fail, reverting the entire transaction — so no one is ever paid and the balance is stuck."
+  },
+  "hints": [
+    "distribute() sends to every participant in one transaction and insists each send succeeds.",
+    "What happens to the whole loop if just one recipient's receive() reverts?",
+    "Register a contract whose receive() reverts, then distribute() can never complete.",
+    "The robust fix is the pull-payment pattern (let each user withdraw their own share); a minimal fix stops one failed send from reverting the others."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/Distributor.sol", "fixTag": "redesign-logic" }
+  }
+}

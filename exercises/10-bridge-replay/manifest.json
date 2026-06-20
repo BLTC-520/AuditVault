@@ -1,0 +1,40 @@
+{
+  "id": "10-bridge-replay",
+  "order": 10,
+  "title": "Signature Replay",
+  "difficulty": "advanced",
+  "vuln": "vuln/bridge/replay",
+  "sector": "bridge",
+  "source": "16739-replay-attack-and-revocation-inversion-on-confidentialapprov",
+  "summary": "A vault releases tokens against a message signed by a trusted signer. The signed message is just (recipient, amount) with no nonce and no record of spent authorizations, so the same signature can be submitted again and again.",
+  "web2Analog": "A replay attack on an auth token / signed request that lacks a nonce or single-use guarantee — capture once, resubmit forever.",
+  "files": {
+    "vulnerable": "src/SignedVault.sol",
+    "extraSources": ["shared/MockERC20.sol"],
+    "exploitStub": "test/Exploit.t.sol",
+    "solutionTest": "solution/Solution.t.sol",
+    "functionalityTest": "solution/Functionality.t.sol"
+  },
+  "identify": {
+    "question": "Why can one authorization drain more than its amount?",
+    "options": [
+      "ecrecover can be tricked into returning the signer",
+      "The signed message has no nonce and the vault never records used signatures, so it can be resubmitted",
+      "token.transfer reverts on failure",
+      "The signer address is immutable"
+    ],
+    "answerIndex": 1,
+    "explanation": "The message is keccak256(to, amount) with no nonce, and withdraw() does not mark a signature as spent. The same (v, r, s) therefore authorizes unlimited withdrawals — a replay."
+  },
+  "hints": [
+    "You hold exactly one valid signature. What stops you from using it twice?",
+    "Look for any per-signature or per-nonce bookkeeping in withdraw(). There is none.",
+    "Call withdraw() with the same (v, r, s) twice to withdraw 2x.",
+    "The fix records each used message hash (or includes a nonce in the signed message) and rejects re-use."
+  ],
+  "stages": {
+    "identify": { "mode": "quiz" },
+    "exploit": { "mode": "auto", "editFile": "test/Exploit.t.sol" },
+    "fix": { "mode": "auto", "editFile": "src/SignedVault.sol", "fixTag": "add-nonce" }
+  }
+}
