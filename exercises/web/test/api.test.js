@@ -85,6 +85,44 @@ test('unknown API route returns 404', async () => {
   assert.equal(body.success, false);
 });
 
+test('GET /api/drills/stats reports the drill pool', async () => {
+  const { status, body } = await api('/api/drills/stats');
+  assert.equal(status, 200);
+  assert.ok(body.data.total >= 400);
+  assert.ok(Array.isArray(body.data.families) && body.data.families.length >= 5);
+});
+
+test('GET /api/drills/next returns a redacted prompt + 4 family options', async () => {
+  const { body } = await api('/api/drills/next');
+  assert.ok(body.data.id && body.data.prompt);
+  assert.equal(body.data.familyOptions.length, 4);
+});
+
+test('POST drill answer grades family then class', async () => {
+  const next = (await api('/api/drills/next')).body.data;
+  const fam = await api(`/api/drills/${next.id}/answer`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stage: undefined, step: 'family', value: next.familyOptions[0] }),
+  });
+  assert.equal(fam.status, 200);
+  assert.ok('correct' in fam.body.data);
+  assert.ok(Array.isArray(fam.body.data.classOptions));
+});
+
+test('POST drill answer: unknown drill id is 404, bad step is 400', async () => {
+  const notFound = await api('/api/drills/99-nope/answer', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ step: 'family', value: 'oracle' }),
+  });
+  assert.equal(notFound.status, 404);
+  const next = (await api('/api/drills/next')).body.data;
+  const badStep = await api(`/api/drills/${next.id}/answer`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ step: 'nope', value: 'oracle' }),
+  });
+  assert.equal(badStep.status, 400);
+});
+
 test('static: GET / serves the SPA shell', async () => {
   const res = await fetch(base + '/');
   assert.equal(res.status, 200);

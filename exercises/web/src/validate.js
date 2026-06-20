@@ -73,6 +73,45 @@ function validateCode(code) {
   return code;
 }
 
+// Finding ids are slugs like "13206-multiple-checks-effects-violations". The
+// pattern blocks path traversal; existence is then confirmed against the index.
+const DRILL_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,120}$/;
+const DRILL_STEPS = ['family', 'class'];
+
+/**
+ * @param {unknown} id
+ * @returns {string}
+ */
+function validateDrillId(id) {
+  if (typeof id !== 'string' || !DRILL_ID_PATTERN.test(id)) {
+    throw new ValidationError('Invalid drill id');
+  }
+  return id;
+}
+
+/**
+ * @param {unknown} step
+ * @returns {'family' | 'class'}
+ */
+function validateDrillStep(step) {
+  if (typeof step !== 'string' || !DRILL_STEPS.includes(step)) {
+    throw new ValidationError(`step must be one of: ${DRILL_STEPS.join(', ')}`);
+  }
+  return step;
+}
+
+/**
+ * A multiple-choice answer value (a family or class tag string).
+ * @param {unknown} value
+ * @returns {string}
+ */
+function validateChoice(value) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 120) {
+    throw new ValidationError('value must be a short non-empty string');
+  }
+  return value;
+}
+
 /**
  * Answer index for the multiple-choice identify stage.
  * @param {unknown} answerIndex
@@ -92,4 +131,7 @@ module.exports = {
   validateStage,
   validateCode,
   validateAnswerIndex,
+  validateDrillId,
+  validateDrillStep,
+  validateChoice,
 };

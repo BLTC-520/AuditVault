@@ -2,6 +2,7 @@
 
 const { listManifests, toSummary, getExerciseDetail, loadManifest } = require('./manifest');
 const { runExploit, runFix } = require('./forgeRunner');
+const drills = require('./drills');
 const {
   ValidationError,
   NotFoundError,
@@ -9,6 +10,9 @@ const {
   validateStage,
   validateCode,
   validateAnswerIndex,
+  validateDrillId,
+  validateDrillStep,
+  validateChoice,
 } = require('./validate');
 const { MAX_CODE_BYTES } = require('./config');
 
@@ -126,6 +130,32 @@ async function handleApi(req, res, pathname) {
       const id = validateExerciseId(decodeURIComponent(runMatch[1]));
       const body = await readJsonBody(req);
       ok(res, await gradeStage(id, body));
+      return true;
+    }
+
+    // GET /api/drills/stats
+    if (req.method === 'GET' && pathname === '/api/drills/stats') {
+      ok(res, drills.stats());
+      return true;
+    }
+
+    // GET /api/drills/next?exclude=id1,id2
+    if (req.method === 'GET' && pathname === '/api/drills/next') {
+      const raw = new URL(req.url, 'http://localhost').searchParams.get('exclude') || '';
+      const exclude = raw.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 100);
+      ok(res, drills.nextDrill(exclude));
+      return true;
+    }
+
+    // POST /api/drills/:id/answer  { step: 'family'|'class', value }
+    const drillAnswer = pathname.match(/^\/api\/drills\/([^/]+)\/answer$/);
+    if (req.method === 'POST' && drillAnswer) {
+      const id = validateDrillId(decodeURIComponent(drillAnswer[1]));
+      if (!drills.hasDrill(id)) throw new NotFoundError(`No drill '${id}'`);
+      const body = await readJsonBody(req);
+      const step = validateDrillStep(body.step);
+      const value = validateChoice(body.value);
+      ok(res, step === 'family' ? drills.gradeFamily(id, value) : drills.gradeClass(id, value));
       return true;
     }
 

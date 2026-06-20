@@ -10,7 +10,15 @@
   <aside id="sidebar">
     <h1>AuditVault <span>CTF</span></h1>
     <p class="tagline">Identify → Exploit → Fix</p>
+    <nav id="mode-nav" aria-label="Mode">
+      <button data-mode="exercises" class="mode-btn active">Exercises</button>
+      <button data-mode="drills" class="mode-btn">Drills</button>
+    </nav>
     <ul id="exercise-list" aria-label="Exercises"></ul>
+    <div id="drill-side" hidden>
+      <p class="drill-side-help">Rapid-fire recognition: classify real findings by bug family, then class. Trains the reflex.</p>
+      <div id="drill-stats"></div>
+    </div>
     <footer>Local learning tool · runs real <code>forge</code></footer>
   </aside>
 
@@ -20,6 +28,15 @@
       <p>Each challenge is a real vulnerability class from the AuditVault findings.
          For every one you’ll <strong>identify</strong> the bug, <strong>exploit</strong> it,
          then <strong>fix</strong> it — graded by running the actual Foundry test suite.</p>
+    </section>
+
+    <section id="drill" hidden>
+      <h2>Spot the Vuln</h2>
+      <p class="drill-instructions">Read the finding below. What kind of bug is it? Classify the family, then the exact class.</p>
+      <pre id="drill-prompt" class="code-block"></pre>
+      <div id="drill-question"></div>
+      <div id="drill-feedback"></div>
+      <button id="drill-next" class="run" hidden>Next drill →</button>
     </section>
 
     <article id="exercise" hidden>

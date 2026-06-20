@@ -115,4 +115,30 @@ button.run:disabled { opacity: .6; cursor: progress; }
 #hint-btn { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
 #hints { color: var(--muted); margin-top: 12px; }
 #hints li { margin: 8px 0; }
+/* ── Mode nav + drills ───────────────────────────────── */
+#mode-nav { display: flex; gap: 6px; margin-bottom: 16px; }
+.mode-btn {
+  flex: 1; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+  padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.mode-btn.active { color: var(--accent); border-color: var(--accent); }
+.drill-side-help { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+#drill-stats .stat-total { font-size: 12px; color: var(--text); margin-bottom: 8px; }
+#drill-stats .stat-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+.drill-instructions { color: var(--muted); }
+.drill-q { font-weight: 600; margin-top: 18px; }
+.drill-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.drill-opt {
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  padding: 10px 14px; border-radius: 8px; cursor: pointer; font-family: var(--mono); font-size: 13px;
+}
+.drill-opt:hover:not(:disabled) { border-color: var(--accent); }
+.drill-opt:disabled { cursor: default; opacity: .85; }
+.drill-opt.opt-correct { border-color: var(--green); color: var(--green); }
+.drill-opt.opt-wrong { border-color: var(--red); color: var(--red); }
+.drill-fb { margin: 10px 0; font-size: 14px; }
+.drill-fb.ok { color: var(--green); }
+.drill-fb.no { color: var(--amber); }
+
 [hidden] { display: none !important; }

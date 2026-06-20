@@ -237,8 +237,129 @@ function enableTab(textarea) {
   });
 }
 
+// ── Drills (recognition mode) ─────────────────────────────
+const DRILL_STATS_KEY = 'auditvault-ctf-drillstats';
+const drill = { current: null, recent: [] };
+
+function loadDrillStats() {
+  try { return JSON.parse(localStorage.getItem(DRILL_STATS_KEY)) || {}; }
+  catch { return {}; }
+}
+function recordDrill(part, key, correct) {
+  const s = loadDrillStats();
+  s.byFamily = s.byFamily || {};
+  if (part === 'family') {
+    const f = s.byFamily[key] || { seen: 0, correct: 0 };
+    f.seen += 1; if (correct) f.correct += 1;
+    s.byFamily[key] = f;
+  } else {
+    s.classSeen = (s.classSeen || 0) + 1;
+    if (correct) s.classCorrect = (s.classCorrect || 0) + 1;
+  }
+  localStorage.setItem(DRILL_STATS_KEY, JSON.stringify(s));
+  renderDrillStats();
+}
+function renderDrillStats() {
+  const box = $('#drill-stats');
+  if (!box) return;
+  const s = loadDrillStats();
+  const fam = Object.values(s.byFamily || {});
+  const seen = fam.reduce((a, f) => a + f.seen, 0);
+  const correct = fam.reduce((a, f) => a + f.correct, 0);
+  const rows = Object.entries(s.byFamily || {}).sort().map(([f, v]) =>
+    el('div', { className: 'stat-row' },
+      el('span', { textContent: f }),
+      el('span', { textContent: `${v.correct}/${v.seen}` })));
+  box.replaceChildren(
+    el('div', { className: 'stat-total', textContent: `Family ${correct}/${seen} · Class ${s.classCorrect || 0}/${s.classSeen || 0}` }),
+    ...rows);
+}
+
+async function loadNextDrill() {
+  $('#drill-feedback').replaceChildren();
+  $('#drill-question').replaceChildren();
+  $('#drill-next').hidden = true;
+  try {
+    const d = await getJSON(`/api/drills/next?exclude=${encodeURIComponent(drill.recent.join(','))}`);
+    drill.current = d;
+    drill.recent = [d.id, ...drill.recent].slice(0, 30);
+    $('#drill-prompt').textContent = d.prompt;
+    renderDrillQuestion('What family of bug is this?', d.familyOptions, answerFamily);
+  } catch (err) {
+    $('#drill-feedback').replaceChildren(el('div', { className: 'drill-fb no', textContent: err.message }));
+  }
+}
+
+function renderDrillQuestion(title, options, onPick) {
+  const wrap = el('div', { className: 'drill-options' });
+  options.forEach((opt) => {
+    const b = el('button', { className: 'drill-opt', textContent: opt });
+    b.addEventListener('click', () => { [...wrap.children].forEach((c) => { c.disabled = true; }); onPick(opt, b); });
+    wrap.append(b);
+  });
+  $('#drill-question').replaceChildren(el('p', { className: 'drill-q', textContent: title }), wrap);
+}
+
+function markPick(btn, correct, answer) {
+  if (!btn) return;
+  [...btn.parentElement.children].forEach((c) => { if (c.textContent === answer) c.classList.add('opt-correct'); });
+  if (!correct) btn.classList.add('opt-wrong');
+}
+function appendFeedback(text, ok) {
+  $('#drill-feedback').append(el('div', { className: `drill-fb ${ok ? 'ok' : 'no'}`, textContent: text }));
+}
+
+async function answerFamily(value, btn) {
+  const r = await postJSON(`/api/drills/${drill.current.id}/answer`, { step: 'family', value });
+  recordDrill('family', r.answer, r.correct);
+  markPick(btn, r.correct, r.answer);
+  appendFeedback(r.correct ? 'Family correct.' : `Family: it was "${r.answer}".`, r.correct);
+  renderDrillQuestion('Now the exact class:', r.classOptions, answerClass);
+}
+
+async function answerClass(value, btn) {
+  const r = await postJSON(`/api/drills/${drill.current.id}/answer`, { step: 'class', value });
+  recordDrill('class', r.answer, r.correct);
+  markPick(btn, r.correct, r.answer);
+  revealDrill(r);
+  $('#drill-next').hidden = false;
+}
+
+function revealDrill(r) {
+  const rev = r.reveal;
+  const card = el('div', { className: `result ${r.correct ? 'pass' : 'failresult'}` },
+    el('div', { className: 'reason', textContent: r.correct ? `Correct — ${rev.klass}` : `It was: ${rev.klass}` }),
+    el('div', { textContent: `Real finding: ${rev.title}` }));
+  if (rev.fixTag) card.append(el('div', { textContent: `Typical fix: fix/${rev.fixTag}` }));
+  if (rev.sector) card.append(el('div', { textContent: `Sector: ${rev.sector}` }));
+  if (rev.source && /^https?:\/\//.test(rev.source)) {
+    card.append(el('div', {}, el('a', { href: rev.source, textContent: 'Read the original report ↗', target: '_blank', rel: 'noopener' })));
+  }
+  $('#drill-feedback').append(card);
+}
+
+// ── Mode switching ────────────────────────────────────────
+function setMode(mode) {
+  const drillMode = mode === 'drills';
+  document.querySelectorAll('.mode-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
+  $('#exercise-list').hidden = drillMode;
+  $('#drill-side').hidden = !drillMode;
+  $('#drill').hidden = !drillMode;
+  if (drillMode) {
+    $('#welcome').hidden = true;
+    $('#exercise').hidden = true;
+    renderDrillStats();
+    if (!drill.current) loadNextDrill();
+  } else {
+    $('#exercise').hidden = !state.detail;
+    $('#welcome').hidden = Boolean(state.detail);
+  }
+}
+
 // ── Boot ─────────────────────────────────────────────────
 (async () => {
+  document.querySelectorAll('.mode-btn').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  $('#drill-next').addEventListener('click', loadNextDrill);
   try {
     state.list = await getJSON('/api/exercises');
     renderList();

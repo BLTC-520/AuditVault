@@ -11,6 +11,15 @@ A local web app that turns the `exercises/` Foundry challenges into a guided
 └────────────────────┘
 ```
 
+## Two modes
+
+- **Exercises** — the 8 hand-crafted Foundry challenges (Identify → Exploit → Fix), graded by real `forge`.
+- **Drills** — *"Spot the Vuln"* rapid recognition over **all ~464 vuln-tagged findings**: a real finding's
+  mechanism is shown with the bug name redacted; you classify the **family**, then the exact **class**;
+  the answer (and a link to the original report) is revealed only after you commit. Per-family accuracy is
+  tracked in your browser so weak spots are visible. This is the breadth/recognition trainer; the
+  exercises are the depth trainer.
+
 ## Requirements
 
 - [Foundry](https://book.getfoundry.sh/) (`forge` on your `PATH`)
